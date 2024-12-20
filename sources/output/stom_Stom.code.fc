@@ -1,0 +1,331 @@
+#pragma version =0.4.4;
+#pragma allow-post-modification;
+#pragma compute-asm-ltr;
+
+#include "stom_Stom.headers.fc";
+#include "stom_Stom.stdlib.fc";
+#include "stom_Stom.storage.fc";
+
+;;
+;; Contract Stom functions
+;;
+
+(int, slice, cell, int, int, int, int, int, int, int) $Stom$_contract_init(slice $owner, cell $content, int $max_supply) impure inline_ref {
+    var (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)) = (null(), null(), null(), null(), null(), null(), null(), null(), null(), null());
+    $self'total_supply = 0;
+    $self'owner = $owner;
+    $self'mintable = true;
+    $self'content = $content;
+    $self'max_supply = $max_supply;
+    $self'base_rate = 50000;
+    $self'growth_rate = 11000;
+    $self'max_base = 50000;
+    $self'max_growth = 11000;
+    $self'total_locked = 0;
+    return ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth);
+}
+
+((int, slice, cell, int, int, int, int, int, int, int), int) $Stom$_fun_reward_rate((int, slice, cell, int, int, int, int, int, int, int) $self, int $locked_amount) impure inline_ref {
+    var (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)) = $self;
+    int $rate = 0;
+    if (($locked_amount > 0)) {
+        int $exp = $global_log2(($locked_amount / 1000000000));
+        $rate = (($self'base_rate * __tact_pow($self'growth_rate, $exp)) / __tact_pow(10000, $exp));
+    }
+    var $fresh$ret_0 = $rate;
+    return (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth), $fresh$ret_0);
+}
+
+((int, slice, cell, int, int, int, int, int, int, int), (cell, cell)) $Stom$_fun_getJettonWalletInit((int, slice, cell, int, int, int, int, int, int, int) $self, slice $address) impure inline_ref {
+    var (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)) = $self;
+    var $fresh$ret_1 = $JettonDefaultWallet$_init_child(__tact_context_sys, $address, $global_myAddress());
+    return (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth), $fresh$ret_1);
+}
+
+((int, slice, cell, int, int, int, int, int, int, int), ()) $Stom$_fun_mint((int, slice, cell, int, int, int, int, int, int, int) $self, slice $to, int $amount, slice $response_destination) impure inline_ref {
+    var (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)) = $self;
+    throw_unless(18668, $self'mintable);
+    $self'total_supply = ($self'total_supply + $amount);
+    var ($winit'code, $winit'data) = ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)~$Stom$_fun_getJettonWalletInit($to);
+    $global_send($SendParameters$_constructor_to_value_bounce_mode_body_code_data($global_contractAddress(($winit'code, $winit'data)), 0, true, 64, $TokenTransferInternal$_store_cell($TokenTransferInternal$_constructor_query_id_amount_from_response_destination_forward_ton_amount_forward_payload(0, $amount, $global_myAddress(), $response_destination, 0, $Cell$_fun_asSlice($Builder$_fun_endCell($global_beginCell())))), $winit'code, $winit'data));
+    return (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth), ());
+}
+
+((int, slice, cell, int, int, int, int, int, int, int), ()) $Stom$_fun_requireSenderAsWalletOwner((int, slice, cell, int, int, int, int, int, int, int) $self, slice $owner) impure inline_ref {
+    var (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)) = $self;
+    var ($ctx'bounced, $ctx'sender, $ctx'value, $ctx'raw) = __tact_context_get();
+    var ($winit'code, $winit'data) = ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)~$Stom$_fun_getJettonWalletInit($owner);
+    throw_unless(4429, ( __tact_slice_eq_bits($ctx'sender, $global_contractAddress(($winit'code, $winit'data))) ));
+    return (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth), ());
+}
+
+((int, slice, cell, int, int, int, int, int, int, int), (int, int, slice, cell, cell)) $Stom$_fun_get_jetton_data((int, slice, cell, int, int, int, int, int, int, int) $self) impure inline_ref {
+    var (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)) = $self;
+    var $fresh$ret_2 = $JettonData$_constructor_total_supply_mintable_owner_content_wallet_code($self'total_supply, $self'mintable, $self'owner, $self'content, $StateInit$_get_code($JettonDefaultWallet$_init_child(__tact_context_sys, $self'owner, $global_myAddress())));
+    return (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth), $fresh$ret_2);
+}
+
+((int, slice, cell, int, int, int, int, int, int, int), slice) $Stom$_fun_get_wallet_address((int, slice, cell, int, int, int, int, int, int, int) $self, slice $owner) impure inline_ref {
+    var (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)) = $self;
+    var $fresh$ret_3 = $global_contractAddress($JettonDefaultWallet$_init_child(__tact_context_sys, $owner, $global_myAddress()));
+    return (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth), $fresh$ret_3);
+}
+
+((int, slice, cell, int, int, int, int, int, int, int), ()) $Stom$_fun_requireOwner((int, slice, cell, int, int, int, int, int, int, int) $self) impure inline_ref {
+    var (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)) = $self;
+    throw_unless(132, ( __tact_slice_eq_bits($self'owner, __tact_context_get_sender()) ));
+    return (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth), ());
+}
+
+((int, slice, cell, int, int, int, int, int, int, int), slice) $Stom$_fun_owner((int, slice, cell, int, int, int, int, int, int, int) $self) impure inline_ref {
+    var (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)) = $self;
+    var $fresh$ret_4 = $self'owner;
+    return (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth), $fresh$ret_4);
+}
+
+;;
+;; Receivers of a Contract Stom
+;;
+
+(((int, slice, cell, int, int, int, int, int, int, int)), ()) $Stom$_internal_binary_Mint((int, slice, cell, int, int, int, int, int, int, int) $self, (int, slice) $msg) impure inline {
+    var ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth) = $self;
+    var ($msg'amount, $msg'receiver) = $msg;
+    ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)~$Stom$_fun_requireOwner();
+    throw_unless(39579, (($self'total_supply + $msg'amount) <= $self'max_supply));
+    ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)~$Stom$_fun_mint($msg'receiver, $msg'amount, $Context$_get_sender(__tact_context_get()));
+    return (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth), ());
+}
+
+((int, slice, cell, int, int, int, int, int, int, int), ()) $Stom$_internal_text_1b9361cf9c3217debd8180a08ebb50418faefc66ac7ed9433f8aa9f81bb0c223((int, slice, cell, int, int, int, int, int, int, int) $self) impure inline {
+    var ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth) = $self;
+    var ($winit'code, $winit'data) = ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)~$Stom$_fun_getJettonWalletInit($Context$_get_sender(__tact_context_get()));
+    $global_send($SendParameters$_constructor_to_value_bounce_mode_body_code_data($global_contractAddress(($winit'code, $winit'data)), 0, true, 64, $ClaimUserReward$_store_cell($ClaimUserReward$_constructor_base_rate_growth_rate($self'base_rate, $self'growth_rate)), $winit'code, $winit'data));
+    return (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth), ());
+}
+
+(((int, slice, cell, int, int, int, int, int, int, int)), ()) $Stom$_internal_binary_ClaimAndLock((int, slice, cell, int, int, int, int, int, int, int) $self, (int) $msg) impure inline {
+    var ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth) = $self;
+    var ($msg'amount) = $msg;
+    var ($winit'code, $winit'data) = ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)~$Stom$_fun_getJettonWalletInit($Context$_get_sender(__tact_context_get()));
+    $global_send($SendParameters$_constructor_to_value_bounce_mode_body_code_data($global_contractAddress(($winit'code, $winit'data)), 0, true, 64, $ClaimAndLockUser$_store_cell($ClaimAndLockUser$_constructor_amount_base_rate_growth_rate($msg'amount, $self'base_rate, $self'growth_rate)), $winit'code, $winit'data));
+    return (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth), ());
+}
+
+(((int, slice, cell, int, int, int, int, int, int, int)), ()) $Stom$_internal_binary_ClaimNotification((int, slice, cell, int, int, int, int, int, int, int) $self, (slice, int) $msg) impure inline {
+    var ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth) = $self;
+    var ($msg'user_address, $msg'amount) = $msg;
+    ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)~$Stom$_fun_requireSenderAsWalletOwner($msg'user_address);
+    $self'total_supply = ($self'total_supply + $msg'amount);
+    return (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth), ());
+}
+
+(((int, slice, cell, int, int, int, int, int, int, int)), ()) $Stom$_internal_binary_LockNotification((int, slice, cell, int, int, int, int, int, int, int) $self, (slice, int) $msg) impure inline {
+    var ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth) = $self;
+    var ($msg'user_address, $msg'amount) = $msg;
+    ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)~$Stom$_fun_requireSenderAsWalletOwner($msg'user_address);
+    $self'total_supply = ($self'total_supply - $msg'amount);
+    $self'total_locked = ($self'total_locked + $msg'amount);
+    return (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth), ());
+}
+
+(((int, slice, cell, int, int, int, int, int, int, int)), ()) $Stom$_internal_binary_VoteNotification((int, slice, cell, int, int, int, int, int, int, int) $self, (int, int, int) $msg) impure inline {
+    var ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth) = $self;
+    var ($msg'amount, $msg'base_rate, $msg'growth_rate) = $msg;
+    throw_unless(42439, ($msg'base_rate <= $self'max_base));
+    throw_unless(34913, ($msg'growth_rate <= $self'max_growth));
+    throw_unless(42439, ($msg'base_rate > 0));
+    throw_unless(34913, ($msg'growth_rate > 0));
+    int $new_base = ((($self'base_rate * ($self'total_locked - $msg'amount)) + ($msg'base_rate * $msg'amount)) / $self'total_locked);
+    int $new_growth = ((($self'growth_rate * ($self'total_locked - $msg'amount)) + ($msg'growth_rate * $msg'amount)) / $self'total_locked);
+    $self'base_rate = $new_base;
+    $self'growth_rate = $new_growth;
+    return (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth), ());
+}
+
+(((int, slice, cell, int, int, int, int, int, int, int)), ()) $Stom$_internal_binary_MaxRates((int, slice, cell, int, int, int, int, int, int, int) $self, (int, int) $msg) impure inline {
+    var ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth) = $self;
+    var ($msg'base_rate, $msg'growth_rate) = $msg;
+    ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)~$Stom$_fun_requireOwner();
+    $self'max_base = $msg'base_rate;
+    $self'max_growth = $msg'growth_rate;
+    return (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth), ());
+}
+
+(((int, slice, cell, int, int, int, int, int, int, int)), ()) $Stom$_internal_binary_TokenUpdateContent((int, slice, cell, int, int, int, int, int, int, int) $self, (cell) $msg) impure inline {
+    var ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth) = $self;
+    var ($msg'content) = $msg;
+    ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)~$Stom$_fun_requireOwner();
+    $self'content = $msg'content;
+    return (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth), ());
+}
+
+(((int, slice, cell, int, int, int, int, int, int, int)), ()) $Stom$_internal_binary_TokenBurnNotification((int, slice, cell, int, int, int, int, int, int, int) $self, (int, int, slice, slice) $msg) impure inline {
+    var ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth) = $self;
+    var ($msg'query_id, $msg'amount, $msg'sender, $msg'response_destination) = $msg;
+    ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)~$Stom$_fun_requireSenderAsWalletOwner($Context$_get_sender(__tact_context_get()));
+    $self'total_supply = ($self'total_supply - $msg'amount);
+    if ((~ null?($msg'response_destination))) {
+        $global_send($SendParameters$_constructor_to_value_bounce_mode_body(__tact_not_null($msg'response_destination), 0, false, 64, $TokenExcesses$_store_cell($TokenExcesses$_constructor_query_id($msg'query_id))));
+    }
+    return (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth), ());
+}
+
+(((int, slice, cell, int, int, int, int, int, int, int)), ()) $Stom$_internal_binary_ChangeOwner((int, slice, cell, int, int, int, int, int, int, int) $self, (int, slice) $msg) impure inline {
+    var ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth) = $self;
+    var ($msg'queryId, $msg'newOwner) = $msg;
+    ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)~$Stom$_fun_requireOwner();
+    $self'owner = $msg'newOwner;
+    ($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth)~$Stom$_fun_reply($ChangeOwnerOk$_store_cell($ChangeOwnerOk$_constructor_queryId_newOwner($msg'queryId, $msg'newOwner)));
+    return (($self'total_supply, $self'owner, $self'content, $self'mintable, $self'max_supply, $self'total_locked, $self'base_rate, $self'growth_rate, $self'max_base, $self'max_growth), ());
+}
+
+;;
+;; Get methods of a Contract Stom
+;;
+
+_ %reward_rate(int $locked_amount) method_id(95349) {
+    int $locked_amount = $locked_amount;
+    var self = $Stom$_contract_load();
+    var res = self~$Stom$_fun_reward_rate($locked_amount);
+    return res;
+}
+
+_ %get_jetton_data() method_id(106029) {
+    var self = $Stom$_contract_load();
+    var res = self~$Stom$_fun_get_jetton_data();
+    return $JettonData$_to_external(res);
+}
+
+_ %get_wallet_address(slice $owner) method_id(103289) {
+    slice $owner = __tact_verify_address($owner);
+    var self = $Stom$_contract_load();
+    var res = self~$Stom$_fun_get_wallet_address($owner);
+    return res;
+}
+
+_ %owner() method_id(83229) {
+    var self = $Stom$_contract_load();
+    var res = self~$Stom$_fun_owner();
+    return res;
+}
+
+_ lazy_deployment_completed() method_id {
+    return get_data().begin_parse().load_int(1);
+}
+
+;;
+;; Routing of a Contract Stom
+;;
+
+((int, slice, cell, int, int, int, int, int, int, int), int) $Stom$_contract_router_internal((int, slice, cell, int, int, int, int, int, int, int) self, int msg_bounced, slice in_msg) impure inline_ref {
+    ;; Handle bounced messages
+    if (msg_bounced) {
+        return (self, true);
+    }
+    
+    ;; Parse incoming message
+    int op = 0;
+    if (slice_bits(in_msg) >= 32) {
+        op = in_msg.preload_uint(32);
+    }
+    
+    
+    ;; Receive Mint message
+    if (op == 4235234258) {
+        var msg = in_msg~$Mint$_load();
+        self~$Stom$_internal_binary_Mint(msg);
+        return (self, true);
+    }
+    
+    ;; Receive ClaimAndLock message
+    if (op == 945132301) {
+        var msg = in_msg~$ClaimAndLock$_load();
+        self~$Stom$_internal_binary_ClaimAndLock(msg);
+        return (self, true);
+    }
+    
+    ;; Receive ClaimNotification message
+    if (op == 2601675930) {
+        var msg = in_msg~$ClaimNotification$_load();
+        self~$Stom$_internal_binary_ClaimNotification(msg);
+        return (self, true);
+    }
+    
+    ;; Receive LockNotification message
+    if (op == 3021919426) {
+        var msg = in_msg~$LockNotification$_load();
+        self~$Stom$_internal_binary_LockNotification(msg);
+        return (self, true);
+    }
+    
+    ;; Receive VoteNotification message
+    if (op == 2955191417) {
+        var msg = in_msg~$VoteNotification$_load();
+        self~$Stom$_internal_binary_VoteNotification(msg);
+        return (self, true);
+    }
+    
+    ;; Receive MaxRates message
+    if (op == 247861601) {
+        var msg = in_msg~$MaxRates$_load();
+        self~$Stom$_internal_binary_MaxRates(msg);
+        return (self, true);
+    }
+    
+    ;; Receive TokenUpdateContent message
+    if (op == 2937889386) {
+        var msg = in_msg~$TokenUpdateContent$_load();
+        self~$Stom$_internal_binary_TokenUpdateContent(msg);
+        return (self, true);
+    }
+    
+    ;; Receive TokenBurnNotification message
+    if (op == 0x7bdd97de) {
+        var msg = in_msg~$TokenBurnNotification$_load();
+        self~$Stom$_internal_binary_TokenBurnNotification(msg);
+        return (self, true);
+    }
+    
+    ;; Receive ChangeOwner message
+    if (op == 2174598809) {
+        var msg = in_msg~$ChangeOwner$_load();
+        self~$Stom$_internal_binary_ChangeOwner(msg);
+        return (self, true);
+    }
+    
+    ;; Text Receivers
+    if (op == 0) {
+        var text_op = slice_hash(in_msg);
+        
+        ;; Receive "ClaimReward" message
+        if (text_op == 0x1b9361cf9c3217debd8180a08ebb50418faefc66ac7ed9433f8aa9f81bb0c223) {
+            self~$Stom$_internal_text_1b9361cf9c3217debd8180a08ebb50418faefc66ac7ed9433f8aa9f81bb0c223();
+            return (self, true);
+        }
+    }
+    
+    return (self, false);
+}
+
+() recv_internal(int msg_value, cell in_msg_cell, slice in_msg) impure {
+    
+    ;; Context
+    var cs = in_msg_cell.begin_parse();
+    var msg_flags = cs~load_uint(4);
+    var msg_bounced = -(msg_flags & 1);
+    slice msg_sender_addr = __tact_verify_address(cs~load_msg_addr());
+    __tact_context = (msg_bounced, msg_sender_addr, msg_value, cs);
+    __tact_context_sender = msg_sender_addr;
+    
+    ;; Load contract data
+    var self = $Stom$_contract_load();
+    
+    ;; Handle operation
+    int handled = self~$Stom$_contract_router_internal(msg_bounced, in_msg);
+    
+    ;; Throw if not handled
+    throw_unless(130, handled);
+    
+    ;; Persist state
+    $Stom$_contract_store(self);
+}
