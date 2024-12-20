@@ -1,17 +1,4 @@
-import {
-    WalletContractV4,
-    beginCell,
-    Address,
-    contractAddress,
-    ContractProvider,
-    TonClient4,
-    TonClient,
-    fromNano,
-    toNano,
-    Cell,
-    BitString,
-    Slice,
-} from "@ton/ton";
+import { WalletContractV4, beginCell, Address, TonClient4, fromNano, toNano, Cell, Slice } from "@ton/ton";
 import { printSeparator } from "../utils/print";
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -34,7 +21,7 @@ import { endpoint, workchain, JETTONADDR } from "./constants";
     let deployer_wallet_contract = client.open(deploy_wallet);
 
     let jetton_master_addr = Address.parse(JETTONADDR);
-    console.log("Jetton Master: " + jetton_master_addr);
+    console.log("Stom Master: " + jetton_master_addr);
     let contract_jm = await client.open(Stom.fromAddress(jetton_master_addr));
     let jetton_wallet = await contract_jm.getGetWalletAddress(deployer_wallet_contract.address);
     let contract_dataFormat = JettonDefaultWallet.fromAddress(jetton_wallet);

@@ -42,7 +42,7 @@ dotenv.config();
 
     // send a message on new address contract to deploy it
     let seqno: number = await deployer_wallet_contract.getSeqno();
-    console.log("======= AI Jetton Contract Deployment =======");
+    console.log("======= Stom Contract Deployment =======");
     console.log("Deployment wallet: " + deployer_wallet_contract.address);
     console.log("Seqno: ", seqno + "\n");
     // Get deployment wallet balance
