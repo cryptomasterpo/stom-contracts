@@ -11,12 +11,10 @@ yarn deploy # To deploy contract
 
 ## Deployment
 
-To deploy a contract, follow these steps:
+To deploy a stom token, follow these steps:
 
-1. Define the [`contract.tact`](./sources/contract.tact) file that will be used as entry point of your contract.
-2. Customize the [`contract.deploy.ts`](./sources/contract.deploy.ts) file based on your `contract.tact` to generate a deployment link. It is crucial to ensure the proper invocation of the `init()` function within the contract.
-
-If you rename `contract.tact`, make sure to update [`tact.config.json`](./tact.config.json) correspondingly. Refer to the [Tact Documentation](https://docs.tact-lang.org/language/guides/config) for detailed information.
+1. Define the [`stom.tact`](./sources/stom.tact) file that will be used as entry point of your contract.
+2. Customize the [`1_deploy_token.ts`](./sources/deploy/1_deploy_token.ts) file based on your `stom.tact` to generate a deployment link. It is crucial to ensure the proper invocation of the `init()` function within the contract.
 
 ## Testing
 

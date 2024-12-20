@@ -1,16 +1,6 @@
-import {
-    Address,
-    beginCell,
-    contractAddress,
-    toNano,
-    TonClient4,
-    internal,
-    fromNano,
-    WalletContractV4,
-} from "@ton/ton";
-import { deploy } from "../utils/deploy";
+import { Address, beginCell, toNano, TonClient4, internal, fromNano, WalletContractV4 } from "@ton/ton";
 import { printAddress, printDeploy, printHeader, printSeparator } from "../utils/print";
-import { buildOnchainMetadata } from "../utils/jetton-helpers";
+
 import { mnemonicToPrivateKey } from "@ton/crypto";
 import { endpoint, workchain, JETTONADDR } from "./constants";
 import * as dotenv from "dotenv";
